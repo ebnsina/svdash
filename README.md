@@ -13,6 +13,22 @@ pnpm llms             # regenerate llms.txt and llms-full.txt from the tokens
 pnpm vitest --project=storybook --run   # renders every story and runs axe on it
 ```
 
+## Demo
+
+Storybook deploys to GitHub Pages on every push to `main`
+(`.github/workflows/pages.yml`), at:
+
+```
+https://ebnsina.github.io/svdash/
+```
+
+The build is base-aware — `STORYBOOK_BASE` is set from the repository name, and the
+fonts live in `src/lib/fonts` so Vite fingerprints them and rewrites their URLs for
+whatever path the site is served under. Nothing is hardcoded to a domain.
+
+**One-time setup:** in the repository's _Settings → Pages_, set **Source** to
+**GitHub Actions**. The workflow cannot do this itself.
+
 ## Pointing an LLM at this design system
 
 `llms-full.txt` is the complete design contract in one file — tokens with their exact

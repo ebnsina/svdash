@@ -25,11 +25,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Apple HIG accommodations: Reduce Motion, Increase Contrast, 44pt touch targets,
   safe-area insets, translucent chrome, and a layout verified at 200% text size.
 
+- GitHub Pages deployment of Storybook on every push to `main`, with a base path
+  derived from the repository name so the build is not tied to a domain.
 - `llms.txt` and `llms-full.txt`: a machine-readable design contract covering tokens,
   radius and shadow rules, the type scale, the accessibility requirements and the
   component API conventions. Generated from `tokens.css` and the component tree by
   `pnpm llms`, with `pnpm check` failing when they are stale, so the reference cannot
   drift from what ships.
+
+### Changed
+
+- Fonts moved from `static/fonts` to `src/lib/fonts` and referenced relatively, so Vite
+  fingerprints them and rewrites their URLs for the base the site is served under.
+  Absolute `/fonts/…` paths would 404 on a project Pages subpath.
 
 ### Security
 

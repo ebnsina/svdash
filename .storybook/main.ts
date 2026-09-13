@@ -8,7 +8,8 @@ const config: StorybookConfig = {
 		'@storybook/addon-a11y',
 		'@storybook/addon-docs'
 	],
-	staticDirs: ['../static'],
-	framework: '@storybook/sveltekit'
+	framework: '@storybook/sveltekit',
+	// GitHub Pages serves a project site from a subpath, so assets must resolve there.
+	viteFinal: (config) => ({ ...config, base: process.env.STORYBOOK_BASE ?? config.base })
 };
 export default config;

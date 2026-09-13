@@ -61,5 +61,6 @@
 	"dependencies": {
 		"@tanstack/svelte-table": "^9.2.4",
 		"@tanstack/svelte-virtual": "^3.13.38"
-	}
+	},
+	"packageManager": "pnpm@11.23.0"
 }
