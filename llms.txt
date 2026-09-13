@@ -1,0 +1,22 @@
+# Svdash
+
+> An accessible SaaS dashboard component library for Svelte 5, TypeScript and Tailwind
+> CSS v4 — 69 components, every one matching its WAI-ARIA APG pattern and
+> verified against axe. Use llms-full.txt for the complete design contract before
+> generating UI meant to match this system.
+
+## Design contract
+
+- [Full design reference](https://raw.githubusercontent.com/ebnsina/svdash/main/llms-full.txt): tokens, radius and shadow rules, type scale, accessibility contract and component API conventions — everything needed to generate matching UI
+- [Design tokens](https://raw.githubusercontent.com/ebnsina/svdash/main/src/lib/tokens.css): the single source of truth for colour, radius, shadow and type in both themes
+- [README](https://raw.githubusercontent.com/ebnsina/svdash/main/README.md): the reasoning behind each decision
+
+## Code
+
+- [Component source](https://github.com/ebnsina/svdash/tree/main/src/lib/components): grouped by layout, navigation, data-display, forms, feedback, buttons, settings, auth
+- [Shared utilities](https://github.com/ebnsina/svdash/tree/main/src/lib/utils): class joining, focus trap, click-outside, Intl formatters
+- [Changelog](https://raw.githubusercontent.com/ebnsina/svdash/main/CHANGELOG.md)
+
+## Optional
+
+- [Storybook stories](https://github.com/ebnsina/svdash/tree/main/src/lib/components): each component's states, co-located as `*.stories.svelte`

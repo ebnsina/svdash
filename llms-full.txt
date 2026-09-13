@@ -1,0 +1,214 @@
+# Svdash — design system reference for LLMs
+
+> An accessible SaaS dashboard component library for Svelte 5, TypeScript and Tailwind
+> CSS v4. This file is the complete design contract: read it before generating any UI
+> intended to match this system. It is generated from the source, so every value below
+> is what actually ships.
+
+Source: https://github.com/ebnsina/svdash
+
+## Non-negotiables
+
+1. **Never hardcode a colour, radius, shadow or font size.** Use the semantic tokens
+   below. A raw hex, `rgb()`, or arbitrary value like `bg-[#f5f5f5]` is always wrong.
+2. **Never write a `dark:` variant.** Both themes are defined once in
+   `src/lib/tokens.css`; a component that writes `dark:bg-…` has broken the system.
+3. **Every interactive component follows its WAI-ARIA APG pattern.** Not "adds some
+   aria attributes" — implements the documented keyboard interaction in full.
+4. **No UI kit, no headless library, no chart library, no icon package at runtime.**
+   Allowed runtime dependencies are Svelte, TanStack Table and TanStack Virtual.
+5. **Components hold no business logic and make no network calls.** Sample data lives
+   in `mock.ts` next to each category and is used only by stories.
+
+## Stack
+
+- Svelte 5 with runes (`$props`, `$state`, `$derived`, `$effect`) — never Svelte 4 stores or `export let`
+- TypeScript, with an explicit `interface Props` on every component
+- Tailwind CSS v4, configured CSS-first via `@theme inline` — there is no `tailwind.config.js`
+- Storybook 10 with `@storybook/addon-svelte-csf`
+- Icons: Lucide via `unplugin-icons`, inlined at build time
+- Fonts: Mona Sans (UI) and Geist Mono (numerics), self-hosted variable woff2
+
+## Colour tokens
+
+Defined as CSS custom properties for light and dark, exposed to Tailwind as
+`--color-*`. Use them as `bg-surface`, `text-muted`, `border-border`, `text-accent`.
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| `--c-canvas` | `oklch(0.971 0.001 250)` | `oklch(0.168 0.003 250)` |
+| `--c-surface` | `oklch(1 0 0)` | `oklch(0.221 0.004 250)` |
+| `--c-subtle` | `oklch(0.951 0.001 250)` | `oklch(0.271 0.004 250)` |
+| `--c-border` | `oklch(0.928 0.0015 250)` | `oklch(0.302 0.005 250)` |
+| `--c-border-strong` | `oklch(0.872 0.002 250)` | `oklch(0.375 0.005 250)` |
+| `--c-field` | `oklch(0.638 0.003 250)` | `oklch(0.525 0.006 250)` |
+| `--c-fg` | `oklch(0.215 0.004 250)` | `oklch(0.968 0.002 250)` |
+| `--c-muted` | `oklch(0.452 0.004 250)` | `oklch(0.716 0.005 250)` |
+| `--c-faint` | `oklch(0.521 0.004 250)` | `oklch(0.651 0.005 250)` |
+| `--c-accent` | `oklch(0.51 0.115 158)` | `oklch(0.72 0.125 158)` |
+| `--c-accent-hover` | `oklch(0.44 0.115 158)` | `oklch(0.79 0.12 158)` |
+| `--c-accent-fg` | `oklch(1 0 0)` | `oklch(0.16 0.02 158)` |
+| `--c-accent-soft` | `oklch(0.952 0.028 158)` | `oklch(0.27 0.05 158)` |
+| `--c-on-solid` | `oklch(1 0 0)` | `oklch(0.17 0.012 258)` |
+| `--c-danger` | `oklch(0.55 0.2 25)` | `oklch(0.7 0.18 25)` |
+| `--c-danger-hover` | `oklch(0.48 0.2 25)` | `oklch(0.74 0.17 25)` |
+| `--c-danger-soft` | `oklch(0.96 0.025 25)` | `oklch(0.31 0.07 25)` |
+| `--c-success` | `oklch(0.51 0.14 152)` | `oklch(0.7 0.14 152)` |
+| `--c-success-soft` | `oklch(0.96 0.04 152)` | `oklch(0.3 0.06 152)` |
+| `--c-warn` | `oklch(0.53 0.14 68)` | `oklch(0.78 0.14 78)` |
+| `--c-warn-soft` | `oklch(0.96 0.05 82)` | `oklch(0.32 0.06 78)` |
+| `--c-info` | `oklch(0.52 0.13 237)` | `oklch(0.71 0.12 235)` |
+| `--c-info-soft` | `oklch(0.96 0.03 235)` | `oklch(0.3 0.06 235)` |
+| `--c-chart-1` | `oklch(0.51 0.115 158)` | `oklch(0.72 0.125 158)` |
+| `--c-chart-2` | `oklch(0.66 0.15 195)` | `oklch(0.74 0.13 195)` |
+| `--c-chart-3` | `oklch(0.7 0.16 88)` | `oklch(0.78 0.14 88)` |
+| `--c-chart-4` | `oklch(0.62 0.19 340)` | `oklch(0.71 0.17 340)` |
+| `--c-chart-5` | `oklch(0.64 0.15 152)` | `oklch(0.73 0.13 152)` |
+| `--c-overlay` | `oklch(0.215 0.004 250 / 0.4)` | `oklch(0.12 0.003 250 / 0.6)` |
+| `--c-chrome` | `oklch(1 0 0 / 0.72)` | `oklch(0.221 0.004 250 / 0.72)` |
+| `--c-skeleton` | `oklch(0.932 0.0015 250)` | `oklch(0.273 0.004 250)` |
+
+### How to choose
+
+- `canvas` is the page; `surface` is a card sitting on it; `subtle` is a fill inside a card.
+- `fg` → `muted` → `faint` is the text hierarchy. Never use `faint` for body copy.
+- `accent` is sea green and means "primary action or current location", nothing else.
+- `field` is **only** for the outline of a control identified by its outline —
+  checkbox, radio, switch track, text input. It is darker than `border` on purpose.
+- `border` is a decorative hairline: row separators, outline buttons. Use it at
+  `/60` opacity for separators inside a card.
+- `on-solid` is the text colour on a filled status chip; it flips between themes so
+  solid badges stay legible in dark mode. Never use `text-white` on a status fill.
+- `chart-1`…`chart-5` stay raw custom properties so SVG `fill`/`stroke` can read them.
+
+## Radius
+
+| Utility | Value |
+| --- | --- |
+| `rounded-xs` | `0.375rem` |
+| `rounded-sm` | `0.5rem` |
+| `rounded-md` | `0.75rem` |
+| `rounded-lg` | `1rem` |
+| `rounded-xl` | `1.25rem` |
+
+One rule, applied everywhere:
+
+- Containers — cards, dialogs, menus, sheets, popovers — are `rounded-xl`.
+- Every pressable control is `rounded-md` **regardless of size**, so a small button and
+  a small input in the same toolbar agree. Small bare icon affordances are `rounded-md` too.
+- Chips, badges and avatars are `rounded-full`.
+- Rows flush to a container edge use the **concentric** radius: inner = outer − padding.
+  A `p-1` menu at `rounded-xl` holds `rounded-lg` items. Never mismatch these.
+
+## Shadow and border
+
+- Elevation replaces outline. Cards are `shadow-xs` with **no border**; floating panels
+  (date pickers, popovers) are `shadow-md`; overlays (modals, drawers, menus, command
+  palette) are `shadow-lg`.
+- Every shadow is two layers: a 1–2px contact edge plus a wide, low-opacity ambient pass.
+- Filled buttons (primary, secondary, destructive) carry **no** border — the fill is the
+  boundary. Only outline buttons keep one.
+- Borders that survive: control outlines (`border-field`), row separators
+  (`border-border/60`), outline buttons, and the dashed empty-state and drop zone.
+
+## Type
+
+- `--font-sans`: Mona Sans. `--font-mono`: Geist Mono, used for every number, currency
+  value, identifier and code string, always with `tabular-nums`.
+- The scale sits ~7% below Tailwind's default because Mona Sans has an x-height of 52.5
+  per 100em where most UI sans sit nearer 49 — on a stock scale it renders visibly
+  larger than its nominal size.
+
+| Utility | Value |
+| --- | --- |
+| `text-2xs` | `0.625rem` |
+| `text-xs` | `0.6875rem` |
+| `text-sm` | `0.8125rem` |
+| `text-base` | `0.9375rem` |
+| `text-lg` | `1.0625rem` |
+| `text-xl` | `1.1875rem` |
+| `text-2xl` | `1.375rem` |
+| `text-3xl` | `1.75rem` |
+
+- **Never override the root font size.** Scaling `html` shrinks every `rem`, including
+  the 44pt touch targets. Adjust the scale tokens instead.
+- Headings use `font-display` (tighter tracking). Weights: Regular, Medium, Semibold,
+  Bold only — never a light weight.
+
+## Accessibility contract
+
+This is the part most generated UI gets wrong. All of it is enforced: every story is
+rendered in Chromium and asserted against axe with violations as **hard failures**.
+
+- **APG patterns**: dialog and alertdialog (focus trap + restore), menu button (roving
+  tabindex, arrows, Home/End, Escape), tabs (roving tabindex, automatic activation),
+  editable combobox with list autocomplete (`aria-activedescendant`), listbox, tooltip,
+  and the date-picker grid (arrows, PageUp/PageDown, Home/End).
+- **Contrast**: every text pair clears WCAG AA 4.5:1 in *both* themes. Control outlines
+  clear **WCAG 1.4.11** at 3:1 — that is why `--c-field` exists separately from
+  `--c-border`. axe does not test 1.4.11 on custom controls, so verify these by
+  computing the ratio, not by running the sweep.
+- **Touch targets**: 44×44pt minimum hit region per Apple HIG, which applies to pointers
+  too, not only touch. Use the `hit-area` utility to extend the region without
+  inflating the visible control.
+- **Never rely on colour alone.** Status carries a dot, an icon and a text label.
+- **Live regions** for anything asynchronous: toasts, copy confirmation, key reveal,
+  selection counts, filter results.
+- **Scroll containers must be focusable** (`tabindex="0"` plus an accessible name) when
+  their content has nothing focusable — otherwise they are unreachable by keyboard.
+- **Never use a text input that opens an overlay on focus.** It swallows keystrokes.
+  Use a button with `aria-haspopup="dialog"`.
+- **Disabled controls that need explaining** use `aria-disabled` plus
+  `aria-describedby`, not the `disabled` attribute, which drops them from the tab order.
+- Respect `prefers-reduced-motion` and `prefers-contrast: more`. Both are handled
+  globally in `tokens.css`; do not re-implement per component.
+- Layout must survive **200% text** without clipping. Use rem-based
+  `grid-cols-[repeat(auto-fit,minmax(15rem,1fr))]` rather than fixed column counts.
+
+## Component API conventions
+
+```svelte
+<script lang="ts">
+	interface Props {
+		/** Required, and documented when the name is not self-evident. */
+		label: string;
+		variant?: 'primary' | 'secondary';
+		/** Two-way state is `$bindable`. */
+		open?: boolean;
+		/** Every component accepts `class` for layout overrides from the parent. */
+		class?: string;
+		/** Content is a Snippet; typed parameters when it needs context. */
+		children?: Snippet<[{ id: string }]>;
+	}
+
+	let { label, variant = 'primary', open = $bindable(false), class: klass, children }: Props =
+		$props();
+</script>
+```
+
+- Components accept `...rest` and spread it onto the underlying element when they can be
+  used as a trigger — otherwise ARIA wiring passed by a parent is silently dropped.
+- Compose with snippets (`trigger`, `actions`, `footer`, `cell`, `row`), not slots.
+- Use `cn()` from `#lib/utils/cn.js` to join classes; all formatting goes through
+  `Intl` helpers in `#lib/utils/format.js` — never a hand-rolled formatter.
+- Comments are one line, two at most, and explain *why*, never *what*.
+- Copy is plain language. No jargon, including in error states.
+
+## Component inventory (69 components)
+
+- **Application shell** (`src/lib/components/layout`): MobileNav, PageShell, Sidebar, Topbar
+- **Navigation** (`src/lib/components/navigation`): Breadcrumbs, CommandPalette, Pagination, Stepper, Tabs
+- **Data display** (`src/lib/components/data-display`): Avatar, AvatarGroup, Badge, BarChart, ChartLegend, ChartTable, DataTable, DonutChart, EmptyState, LineChart, ProgressBar, ProgressRing, Sparkline, StatCard, Timeline, VirtualList
+- **Forms** (`src/lib/components/forms`): Calendar, Checkbox, Combobox, DatePicker, DateRangePicker, FileUpload, FormField, Input, MultiSelect, NumberInput, Radio, RadioGroup, Select, Switch, TagInput, Textarea
+- **Overlays and feedback** (`src/lib/components/feedback`): Alert, ConfirmDialog, Drawer, DropdownMenu, Modal, Popover, Skeleton, ToastStack, Tooltip
+- **Buttons** (`src/lib/components/buttons`): Button, ButtonGroup, Fab, IconButton, Spinner
+- **Settings and account** (`src/lib/components/settings`): ApiKeyRow, BillingCard, DangerZone, ProfileCard, SettingsCard, SettingsLayout, TeamMemberList
+- **Authentication screens** (`src/lib/components/auth`): AuthShell, ForgotPasswordForm, LoginForm, OnboardingWelcome, ResetPasswordForm, SignupForm, VerifyEmail
+
+## Key files
+
+- [`src/lib/tokens.css`](https://raw.githubusercontent.com/ebnsina/svdash/main/src/lib/tokens.css) — every design token, both themes
+- [`src/lib/components/buttons/styles.ts`](https://raw.githubusercontent.com/ebnsina/svdash/main/src/lib/components/buttons/styles.ts) — button variants
+- [`src/lib/components/forms/field.ts`](https://raw.githubusercontent.com/ebnsina/svdash/main/src/lib/components/forms/field.ts) — shared control styling
+- [`src/lib/utils/actions.ts`](https://raw.githubusercontent.com/ebnsina/svdash/main/src/lib/utils/actions.ts) — focus trap, click-outside, scroll lock
+- [`README.md`](https://raw.githubusercontent.com/ebnsina/svdash/main/README.md) — rationale behind the decisions above
