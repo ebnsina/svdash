@@ -1,0 +1,179 @@
+# Svdash
+
+An accessible SaaS dashboard component library for Svelte 5. Every component is
+documented in Storybook with its default, loading, empty, error and disabled
+states.
+
+```bash
+pnpm install
+pnpm storybook        # component docs at http://localhost:6006
+pnpm dev              # SvelteKit dev server
+pnpm check            # svelte-check
+pnpm vitest --project=storybook --run   # renders every story and runs axe on it
+```
+
+## Stack
+
+Svelte 5 (runes) · TypeScript · Tailwind CSS v4 · Storybook 10.
+
+Table and list logic come from **TanStack** — `@tanstack/svelte-table` v9 (runes-native)
+drives sorting, global filtering, row selection, column visibility and pagination;
+`@tanstack/svelte-virtual` windows long lists. The markup stays ours, so cells are
+Svelte snippets rather than render functions.
+
+Everything else is hand-built: no UI kit, no headless component library, no chart
+library. Charts and the calendar grid are hand-rolled SVG. Icons are Lucide, inlined
+at build time by `unplugin-icons`, so no icon package reaches the runtime bundle.
+Fonts are self-hosted woff2 files committed to `static/fonts`.
+
+## Layout
+
+```
+src/lib
+  tokens.css      design tokens — the single source of truth for colour, radius, shadow, type
+  icons/          Icon.svelte + the name→glyph registry
+  utils/          cn, uid, focus trap, click-outside, Intl formatters
+  components/
+    layout/       sidebar, topbar, mobile-nav, page-shell
+    navigation/   breadcrumbs, tabs, stepper, command-palette, pagination
+    data-display/ data-table, virtual-list, stat-card, badge, avatar, empty-state,
+                  timeline, progress, sparkline, line/bar/donut charts
+    forms/        input, textarea, number, select, combobox, multi-select, tag-input,
+                  checkbox, radio, switch, calendar, date + range picker, file upload,
+                  form-field wrapper
+    feedback/     modal, confirm-dialog, drawer, toast, alert, tooltip, popover,
+                  skeleton, dropdown-menu
+    settings/     settings-layout, settings-card, profile, billing, api-key-row,
+                  team-member-list, danger-zone
+    auth/         login, signup, forgot/reset password, verify email, onboarding
+  foundations/    design token and full-dashboard stories
+```
+
+## Design tokens
+
+All colour, radius, shadow and type live in `src/lib/tokens.css`. Semantic CSS
+custom properties (`--c-surface`, `--c-muted`, `--c-accent`, `--c-chart-1`…) are
+defined once for light and again under `.dark`, then exposed to Tailwind through
+`@theme inline`. Components only ever write `bg-surface`, `text-muted`,
+`text-accent` — never a raw colour and never a `dark:` override. Chart colours stay
+as raw custom properties so SVG `fill`/`stroke` can read them.
+
+- **Brand** — sea green, `oklch(0.51 0.115 158)` in light and `oklch(0.72 0.125 158)` in dark.
+- **Neutrals are a ladder of whites, and of onyx.** Chroma stays at or below 0.006 so
+  there is no colour cast in either direction — light mode reads as white stepping down,
+  dark mode bottoms out at `0.168` lightness (onyx, never `#000`).
+- **Elevation over outline** — surfaces are separated by a soft iOS-style shadow and a
+  canvas/surface lightness step, not by borders. Borders survive only where they do
+  real work. Filled buttons (primary, secondary, destructive) carry no outline at all —
+  the fill is the boundary. What remains: a soft hairline on outline buttons and row
+  separators (60% opacity), and `--c-field` on controls whose outline _is_ the control.
+  Cards sit at `shadow-xs`, floating panels at `md`, overlays at `lg`; every step is a
+  two-layer shadow — a 1–2px contact edge plus a wide, low-opacity ambient pass.
+- **Radius** — one rule, applied everywhere: containers (cards, dialogs, menus, sheets)
+  are `xl` (1.25rem); every pressable control is `md` (0.75rem) regardless of size, so a
+  small button and a small input in the same toolbar agree; chips and badges are
+  `rounded-full`. Rows flush inside a container use the **concentric** radius —
+  inner = outer − padding, so a `p-1` menu holds `rounded-lg` items inside `rounded-xl`.
+- **Type** — Mona Sans for everything, Geist Mono for numbers and code, both self-hosted
+  variable woff2 in `static/fonts` under SIL OFL 1.1. Hierarchy comes from weight and
+  size, not a second family; `font-display` only tightens tracking on large headings.
+- **The type scale is tuned to the face.** Mona Sans has an x-height of 52.5 per 100em
+  where most UI sans sit nearer 49, so on a stock scale it renders visibly larger than
+  its nominal size. Every step sits ~7% below Tailwind's default to land at the right
+  apparent size — `text-sm` is 13px, `text-base` 15px. The root font size is never
+  overridden, so user text scaling and the 44pt touch targets are unaffected.
+
+Every text-on-background pair in both themes clears WCAG AA (4.5:1), and every control
+boundary clears the 3:1 that **WCAG 1.4.11 (non-text contrast)** asks of a component
+identified by its outline — checkbox, radio, switch track, input, combobox. That is what
+`--c-field` exists for, separate from the decorative `--c-border` hairline. axe does not
+test 1.4.11 on custom controls, so these ratios are computed from the oklch values
+directly rather than trusted to the automated sweep.
+
+## Accessibility
+
+Each interactive component follows its WAI-ARIA APG pattern — dialog, alertdialog,
+menu button, tabs with roving tabindex, editable combobox with list autocomplete,
+listbox, tooltip, date picker grid. Focus is trapped in modals and drawers and
+restored to the trigger on close; live regions announce toasts, copy results, key
+reveal, selection counts and range selection.
+
+`pnpm vitest --project=storybook --run` renders all 302 stories in Chromium and
+runs axe against each one. `a11y.test` is set to `error`, so a violation fails the
+run rather than being logged.
+
+## Apple Human Interface Guidelines
+
+Checked against the HIG itself (`developer.apple.com/design/human-interface-guidelines`,
+Accessibility / Layout / Typography / Color / Buttons), not from memory. The parts
+that translate to the web platform are implemented; each line below maps to a
+specific piece of that guidance.
+
+| HIG guidance                                                                                                          | Implementation                                                                                                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "A button needs a hit region of at least 44x44 pt … whether they use a fingertip, a pointer, their eyes, or a remote" | `hit-area` utility extends the hit region with a centred pseudo-element without inflating the visible control; icon-only buttons use it, calendar days are 44px, and coarse pointers get a 44pt floor on every control |
+| "Give people the option to enlarge text by at least 200 percent"                                                      | All sizing is `rem`. Verified at 200% root font: stat grids use `repeat(auto-fit, minmax(15rem, 1fr))` so columns drop out, and the topbar sheds its shortcut hint and identity block via container queries            |
+| "Reduce the number of columns when the font size increases"                                                           | rem-based `auto-fit` grids rather than fixed `sm:grid-cols-2 xl:grid-cols-4` counts                                                                                                                                    |
+| "Keep text truncation to a minimum as font size increases"                                                            | Metric values wrap rather than clip; trend rows wrap instead of truncating                                                                                                                                             |
+| "When Reduce Motion is active … reduce automatic and repetitive animations"                                           | `prefers-reduced-motion` collapses every transition and animation                                                                                                                                                      |
+| "Ensure it at least provides a higher contrast colour scheme when Increase Contrast is turned on"                     | `prefers-contrast: more` firms up borders and lifts the quietest text, in both appearances                                                                                                                             |
+| "Strive to meet colour contrast minimum standards … check in both light and dark appearances"                         | Every text pair computed from oklch to WCAG AA in both themes; `--c-on-solid` flips so solid badges stay legible in dark                                                                                               |
+| "Convey information with more than colour alone"                                                                      | Status carries a dot, an icon and a text label — never hue alone                                                                                                                                                       |
+| "Minimize use of time-boxed interface elements … prefer dismissing views with an explicit action"                     | Hovering or focusing the toast stack holds every auto-dismiss timer; errors never auto-dismiss                                                                                                                         |
+| "Prefer system-defined colours … supply light, dark and increased-contrast variants"                                  | Semantic tokens only, defined once per appearance                                                                                                                                                                      |
+| "Avoid light font weights"                                                                                            | Regular / Medium / Semibold only                                                                                                                                                                                       |
+| Materials — chrome that content reads through                                                                         | Topbar, sticky table header and every scrim are translucent and blurred                                                                                                                                                |
+| Safe areas                                                                                                            | Bottom sheets and the mobile nav pad for `env(safe-area-inset-*)`                                                                                                                                                      |
+
+**Deliberately not followed:** the HIG calls for title-case button labels
+("Save Changes"). This library uses sentence case, which is the web convention and
+keeps copy in plain language.
+
+## Shell layout
+
+- **Topbar** — sidebar toggle, then breadcrumbs, then the right cluster: search, page
+  actions, theme, notifications, account. Breadcrumbs live in the banner rather than in
+  `<main>`, which is where site navigation belongs semantically; they hide below `md`,
+  where the page `<h1>` carries the location instead.
+- **Search is a button, not an input.** It opens the command palette (`aria-haspopup="dialog"`).
+  A text field that redirects to an overlay on focus swallows whatever you typed.
+- **One search treatment everywhere** — soft hairline, subtle fill, `rounded-lg` — shared by
+  the topbar control and table toolbars (`<Input variant="filled">`). This is the one place
+  a control drops the 3:1 outline: a fill is only ~1.1:1 against a card no matter how dark
+  you push it, and the magnifier plus placeholder identify the control. Form fields keep
+  `--c-field`.
+- **Page header** — title and description lead, actions sit opposite. Nothing else.
+- **Table footer** — selection count on the left, `x–y of n` with prev/next on the right.
+
+## Tables and long lists
+
+`DataTable` takes a plain `Column[]` and a `cell` snippet, and runs TanStack Table
+underneath:
+
+```svelte
+<DataTable caption="Invoices" bind:columns bind:selected {rows} pageSize={12}>
+	{#snippet cell({ row, column })}
+		…
+	{/snippet}
+</DataTable>
+```
+
+- **Pagination** is on by default (`pageSize={10}`); `pageSize={0}` renders every row.
+- **`virtualize`** swaps pagination for windowing. Rows render into spacer `<tr>`s
+  above and below rather than absolute positioning, so the `<table>` keeps its
+  semantics. Measured with 5,000 rows: 225,000px of scroll, 39 rows in the DOM.
+- **Search** is debounced (200ms) before it reaches the filter, so typing does not
+  re-filter the whole set per keystroke.
+- The scroll region is focusable, because a table you can only scroll with a mouse
+  is not reachable by keyboard.
+- `Pagination` has two variants: `numbered` for standalone lists, `compact` (range +
+  prev/next) for table footers, which is what `DataTable` uses.
+
+`VirtualList` does the same windowing for non-tabular content (activity feeds,
+pickers), keeping `aria-setsize`/`aria-posinset` correct so a screen reader still
+announces "item 412 of 2,000" even though only a dozen rows exist in the DOM.
+
+## Mock data
+
+Components hold no business logic and make no network calls. Sample rows live in
+`mock.ts` next to each category and are used only by stories.

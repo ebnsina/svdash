@@ -1,0 +1,60 @@
+<script module lang="ts">
+	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import SettingsLayout from './SettingsLayout.svelte';
+	import SettingsCard from './SettingsCard.svelte';
+	import { sections } from './mock.js';
+	import Input from '#lib/components/forms/Input.svelte';
+	import Switch from '#lib/components/forms/Switch.svelte';
+	import Button from '#lib/components/buttons/Button.svelte';
+
+	const { Story } = defineMeta({
+		title: 'Settings/SettingsLayout',
+		component: SettingsLayout,
+		tags: ['autodocs'],
+		parameters: { layout: 'fullscreen' },
+		args: { sections, active: 'profile', description: 'Manage your account and workspace.' }
+	});
+</script>
+
+<Story name="Default">
+	{#snippet template(args)}
+		<SettingsLayout {...args}>
+			{#snippet children({ section })}
+				<SettingsCard
+					title="General"
+					description="Applies to the {section.label.toLowerCase()} section."
+					footerNote="Changes save immediately."
+				>
+					<div class="flex flex-col gap-4">
+						<Input label="Display name" value="Amina Rahman" />
+						<Input
+							label="Email address"
+							type="email"
+							value="amina@acme.com"
+							helper="Used for sign in and receipts."
+						/>
+						<Switch label="Show my activity to teammates" checked />
+					</div>
+					{#snippet footer()}
+						<Button size="sm">Save changes</Button>
+					{/snippet}
+				</SettingsCard>
+			{/snippet}
+		</SettingsLayout>
+	{/snippet}
+</Story>
+
+<Story name="Billing section" args={{ active: 'billing' }}>
+	{#snippet template(args)}
+		<SettingsLayout {...args}>
+			{#snippet children()}
+				<SettingsCard title="Payment method">
+					<p class="text-sm text-muted">Visa ending 4242, expires 04/2029.</p>
+					{#snippet footer()}
+						<Button size="sm" variant="outline">Update card</Button>
+					{/snippet}
+				</SettingsCard>
+			{/snippet}
+		</SettingsLayout>
+	{/snippet}
+</Story>
